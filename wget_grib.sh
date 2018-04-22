@@ -66,11 +66,11 @@ download() {
   cd
   [ -d $ARCHIVE ] || mkdir $ARCHIVE
   cd $ARCHIVE
-  if [ ! -e gfs_3_${year}${month}${day}_${hour}00_${1}.grb2 ]; then
+  if [ ! -e $DL ]; then
     wget $U \
-      "$URL/$YEAR_MONTH/$YEAR_MONTH_DAY/gfs_3_${year}${month}${day}_${hour}00_${1}.grb2"
+      "$URL/$YEAR_MONTH/$YEAR_MONTH_DAY/$DL"
     rm -f data.grb2
-    ln -s gfs_3_${year}${month}${day}_${hour}00_${1}.grb2 data.grb2
+    ln -s $DL data.grb2
     # Synchronise the other node
     # rsync -avz -e ssh ${ARCHIVE}/ sb2:${ARCHIVE}/
   else echo -e "Grib data already downloaded before, not downloading.\n"
@@ -93,19 +93,12 @@ cd $TMP
 get_Qq
 
 # Calculate how many days we have to go back
-DIFF_DAY=0
-DIFF=$( expr "$DAY" - "$day" )
-while [ $DIFF -ne 0 ]; do
-  DAY=$( expr "$DAY" - 1 )
-  if [ "$DAY" -eq 0 ]; then
-    last_day_of_month $month $year
-    DAY=$LAST_DAY_OF_MONTH
-  fi
-  DIFF_DAY=$(( $DIFF_DAY+1 ))
-  # If DIFF_DAY >= 10; then exit as something is wrong
-  [ "$DIFF_DAY" -ge 10 ] && echo "DIFF_DAY overflow" && exit 2
-  DIFF=$( expr "$DAY" - "$day" )
-done
+DIFF_DAY=$( expr "$DAY" - "$day" )
+if [ "$DIFF_DAY" -lt 0 ]; then
+  last_day_of_month $month $year
+  DIFF_DAY=$( expr "$DIFF_DAY" + "$LAST_DAY_OF_MONTH" )
+fi
+[ "$DIFF_DAY" -ge 10 ] && echo "DIFF_DAY overflow" && exit 2
 
 # Calculate how many 3 hours we have to go back
 DIFF_Q=$(( $Q+8*$DIFF_DAY-$q ))
@@ -113,4 +106,5 @@ DIFF_Q=$(( $Q+8*$DIFF_DAY-$q ))
 [ "$DIFF_Q" -gt 90 ] && echo "DIFF_Q overflow" && exit 3
  
 format $DIFF_Q
-download $FC
+DL=gfs_3_${year}${month}${day}_${hour}00_${FC}.grb2
+download
