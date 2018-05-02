@@ -6,3 +6,6 @@ This script calculates the right forecast for at the time of execution.
  Usage : wget_grib.sh [-q]
  -q  For a quiter execution of the script. This means that you will not get
      any information on the download progress. Errors will always get printed.
+
+For a graphical tool to view the data, zyGrib <http://www.zygrib.org/> is your
+friend.
